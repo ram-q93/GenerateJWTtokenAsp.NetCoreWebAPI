@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -89,5 +88,44 @@ namespace WebAPI.Controllers
             }
             return Unauthorized();
         }
+
+
+        [HttpPost("registeradmin")]
+        public async Task<IActionResult> RegisterAdmin([FromBody] RegisterModel model)
+        {
+            var userExist = await userManager.FindByNameAsync(model.Username);
+            if (userExist != null)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new Response { Status = "Error", Message = "User already exist" });
+            }
+            ApplicationUser user = new ApplicationUser()
+            {
+                Email = model.Email,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                UserName = model.Username
+            };
+            var result = await userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                   new Response { Status = "Error", Message = "User creation failed" });
+            }
+
+            if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
+            {
+                await roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
+            }
+            if (!await roleManager.RoleExistsAsync(UserRoles.User))
+            {
+                await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+            }
+            if (await roleManager.RoleExistsAsync(UserRoles.Admin))
+            {
+                await userManager.AddToRoleAsync(user, UserRoles.Admin);
+            }
+            return Ok(new Response { Status = "success", Message = "user created successfully" });
+        }
+
     }
 }

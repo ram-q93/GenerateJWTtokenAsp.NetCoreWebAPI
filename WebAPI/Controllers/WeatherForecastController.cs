@@ -4,12 +4,15 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WebAPI.Authentication;
 
 namespace WebAPI.Controllers
 {
+    [Authorize(Roles = UserRoles.Admin)]
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
+
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
